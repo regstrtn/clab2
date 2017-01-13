@@ -58,6 +58,7 @@ int main() {
 			sprintf(buffer, "%d\0", n);
 			printf("My response: %s\n", buffer);
 			write(newsockfd, buffer, sizeof(buffer));
+			close(newsockfd);
 			break;
 		}
 		else if(pid<0) {								//Fork fail
@@ -66,4 +67,5 @@ int main() {
 			break;
 		}
 	}
+	close(sockfd);
 }
