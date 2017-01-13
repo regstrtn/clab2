@@ -1,0 +1,29 @@
+************************************Summary Report******************************************* 
+
+Built a simple client server application with the following specifications: 
+1. Client sends a text string and a patter string to the server. 
+2. Server responds with the number of occurrences of the pattern in the text. 
+3. If no occurrences are found, server returns zero.
+4. Server is running on localhost. Port 5000.
+
+
+
+
+*************************************Test Cases*********************************************
+
+---------------------------------------------------------------------------------------------
+|        Input                            | Expected Output                       | Result  |
+---------------------------------------------------------------------------------------------
+|   ;patte                                | Incorrect format                      | Passed  |
+|   text;                                 | Incorrect format                      | Passed  |
+|   21398;213                             | Invalid characters                    | Passed  |
+|   qeworroewi;woeruwe                    | Length exceeded                       | Passed  |
+|   qwreouewqoruioqruiewoiqruoew;asdf     | Length exceeded                       | Passed  |
+|   jkjkjkjk;jk                           | 4 occurrences                         | Passed  |
+|   alsdfkjllj                            | Incorrect format                      | Passed  |
+|   alsdkjf; lkjs                         | Invalid characters                    | Passed  |
+|   lkjfas;;;lkj                          | Invalid characters                    | Passed  |
+|   ;                                     | Incorrect format                      | Passed  |
+---------------------------------------------------------------------------------------------
+
+
