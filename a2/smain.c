@@ -101,10 +101,11 @@ int main() {
 	int qid = shmget(IPC_PRIVATE, 3*sizeof(int), 0666|IPC_CREAT);
 	int *q = (int*)shmat(qid, 0, 0);
 	*ctr = 0;
+	newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
 	while(1) {
 		//newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
 		if(allowconnection(ctr)) {
-			printf("%d clients connected\n", (*ctr)+1); 
+			write(newsockfd, "3 clients connected\n", 40); 
 			(*ctr)++;
 			fillclientdetails(clilist+(*ctr), ctr);
 			pid = 0;
@@ -120,8 +121,7 @@ int main() {
 		}
 		else {
 			usleep(100*1000);
-			printf("Connections: %d. Limit exceeded. \n", *ctr);
-			//write(newsockfd, "Connection limit exceeded\n", 30);
+			write(newsockfd, "Connection limit exceeded\n", 30);
 			//close(newsockfd);
 			continue;
 		}
