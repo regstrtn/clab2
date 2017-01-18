@@ -64,8 +64,8 @@ void handleclients(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 	enqueue("foobar", mbuffer, q);
 }
 
-int allowconnection(int *ptr) {
-	if(*ptr >1) return 0;
+int allowconnection(int *ctr) {
+	if(*ctr >1) return 0;
 	return 1;
 }
 
@@ -92,6 +92,7 @@ int main() {
 		perror("bind: ");
 	}
 	listen(sockfd, 10);
+
 	int ctrid = shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
 	int* ctr = (int*)shmat(ctrid, 0, 0);
 	int clilistid = shmget(IPC_PRIVATE, 5*sizeof(cli), 0666|IPC_CREAT);
@@ -102,6 +103,7 @@ int main() {
 	int *q = (int*)shmat(qid, 0, 0);
 	*ctr = 0;
 	newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
+	
 	while(1) {
 		//newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
 		if(allowconnection(ctr)) {
