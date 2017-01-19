@@ -36,16 +36,25 @@ void printclientdetails(cli *a) {
 	printf("%d %d %ld\n", a->id, a->fd, a->conntime);
 }
 
-void retrievemessages(msg *mbuffer, int *q, int newsockfd) {
+void retrievemessages(msg *mbuffer, int *q, cli* clilist) {
 	//Send message to correct client
-	printf("Retrieve function was called\n");
 	msg *curr = mbuffer + q[1];
-	while(q[1]!=q[0]) {
+	int i;
+	//while(q[0]<100) {
+	/*	if(q[1]>=q[0]) {
+			break;
+			usleep(100*1000); 
+			continue;
+		}*/
 		q[1]++;
-		printf("%s\n", curr->message);
-		write(newsockfd, curr->message, 255);
+		char *r = curr->recname;
+		for(i=0;i<5;i++) {
+			if(strcmp(clilist[i].name, r)==0) break;
+		}
+		if(i==5) printf("Receiver does not exist\n");
+		write(clilist[i].fd, curr->message, 255);
 		curr = curr+1;
-	}
+	//}
 }
 
 void enqueue(msg newmsg, msg* mbuffer, int *q) {
@@ -79,13 +88,13 @@ void handleclients(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 	int counter = 0;
 	while(1) {
 		msg newmsg;
-		printf("Going to read message\n");
 		read(me->fd, newmsg.message, 255);
-		write(me->fd, "Your message was read :)", 40);
+		char* rec = getrecname(newmsg.message);
+		strcpy(newmsg.recname, rec);
+		newmsg.mtime = time(0);
 		enqueue(newmsg, mbuffer, q);
 		counter++;
-		if(counter%5==0) retrievemessages(mbuffer, q, me->fd);
-		printf("Counter value: %d\n", counter);
+		if(counter%3==0) retrievemessages(mbuffer, q, clilist);
 	}
 
 }

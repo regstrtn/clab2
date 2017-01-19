@@ -50,12 +50,13 @@ int main() {
 				read(fds[i].fd, incoming, 255);
 				if(i==0) {							//Read message from server
 					printf("Incoming message from %d: %s\n", fds[i].fd, incoming);
+					bzero((char*)incoming, 256);
 				}
 				if(i==1) {							//Send message to server
 					write(sockfd, incoming, 255);
+					bzero((char*)incoming, 256);
 				}
 			}
 		}
-		bzero((char*)incoming, 256);
 	}
 }
