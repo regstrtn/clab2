@@ -31,14 +31,28 @@ typedef struct {
 	time_t mtime;
 } msg;
 
-void enqueue(char *str, msg* mbuffer, int *q) {
-	//Put message in message buffer queue
-	strcpy(mbuffer->message, str);
+void printclientdetails(cli *a) {
+	printf("Printing details of client %s: ", a->name);
+	printf("%d %d %ld\n", a->id, a->fd, a->conntime);
 }
 
-void retrievemessages(msg *mbuffer) {
+void retrievemessages(msg *mbuffer, int *q, int newsockfd) {
 	//Send message to correct client
-	printf("I will send message to correct client");
+	printf("Retrieve function was called\n");
+	msg *curr = mbuffer + q[1];
+	while(q[1]!=q[0]) {
+		q[1]++;
+		printf("%s\n", curr->message);
+		write(newsockfd, curr->message, 255);
+		curr = curr+1;
+	}
+}
+
+void enqueue(msg newmsg, msg* mbuffer, int *q) {
+	//Put message in message buffer queue
+	msg* curr = mbuffer + q[0];
+	q[0]++;
+	strcpy(curr->message, newmsg.message);
 }
 
 char* getrecname(char *rawmsg) {
@@ -50,18 +64,30 @@ char* getrecname(char *rawmsg) {
 	return cliname;
 }
 
-void fillclientdetails(cli *a, int *ctr) {
+void fillclientdetails(cli *a, int *ctr, int newsockfd) {
 	a->id = *ctr;
 	sprintf(a->name, "client%d ", *ctr);
+	a->fd = newsockfd;
 	a->conntime = time(0)%10000;
-	printf("%d %s %ld\n", a->id, a->name, a->conntime);
 }
 
 void handleclients(cli* clilist, int* ctr, msg* mbuffer, int *q) {
-	cli* me = clilist+(*ctr);
+	cli* me = clilist+((*ctr)-1);
 	printf("Printing my information: %s\n", me->name);
 	printf("Receiver name: %s\n", getrecname("Hello:World"));
-	enqueue("foobar", mbuffer, q);
+	write(me->fd, me->name, 30);
+	int counter = 0;
+	while(1) {
+		msg newmsg;
+		printf("Going to read message\n");
+		read(me->fd, newmsg.message, 255);
+		write(me->fd, "Your message was read :)", 40);
+		enqueue(newmsg, mbuffer, q);
+		counter++;
+		if(counter%5==0) retrievemessages(mbuffer, q, me->fd);
+		printf("Counter value: %d\n", counter);
+	}
+
 }
 
 int allowconnection(int *ctr) {
@@ -74,9 +100,11 @@ int main() {
 	struct sockaddr_in serv;
 	struct sockaddr_in cli_addr;
 
-	portno = 5000;
+	portno = 5001;
 	signal(SIGINT, sighandler);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	int reuse = 1;
+	setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
 	if(sockfd == -1) {
 		perror("socket: ");
 		return 1;
@@ -102,31 +130,28 @@ int main() {
 	int qid = shmget(IPC_PRIVATE, 3*sizeof(int), 0666|IPC_CREAT);
 	int *q = (int*)shmat(qid, 0, 0);
 	*ctr = 0;
-	newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
-	
+	q[0] = 0; q[1] = 0;
 	while(1) {
-		//newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
+		sleep(1);
+		newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
 		if(allowconnection(ctr)) {
-			write(newsockfd, "3 clients connected\n", 40); 
+			//write(newsockfd, "3 clients connected\n", 40); 
+			fillclientdetails(clilist+(*ctr), ctr, newsockfd);
+			printclientdetails(clilist+(*ctr));
 			(*ctr)++;
-			fillclientdetails(clilist+(*ctr), ctr);
-			pid = 0;
-			//pid = fork();
+			pid = fork();
 			if(pid == 0) {	//Child process
 				handleclients(clilist, ctr, mbuffer, q);
 			}
 			else if(pid >0) {	//Parent process
-				//close(newsockfd);
+				close(newsockfd);
 				continue;
 			}
-			usleep(1000*100);
 		}
 		else {
-			usleep(100*1000);
 			write(newsockfd, "Connection limit exceeded\n", 30);
-			//close(newsockfd);
+			close(newsockfd);
 			continue;
 		}
-		retrievemessages(mbuffer);
 	}
 }

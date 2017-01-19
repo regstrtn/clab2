@@ -21,8 +21,10 @@ int main() {
 	char *buffer = NULL;
 	char incoming[256];
 	size_t len;
-	portno = 5000;
+	portno = 5001;
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	int reuse = 1;
+	setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
 	if(sockfd == -1) {
 		perror("socket: ");
 		exit(0);
@@ -40,18 +42,18 @@ int main() {
 		{0, POLLIN}
 	};
 	while(1) {
-		//printf("I keep coming here");
 		usleep(1000*100);
-		//buffer = NULL;			//required to be null by getline
-		//getline(&buffer, &len, stdin);
-		//write(sockfd, buffer, strlen(buffer));
-		//read(sockfd, incoming, 255);
 		int r = poll(fds, 2, -1);
 		int i;
 		for(i = 0;i<2;i++) {
 			if(fds[i].revents & POLLIN) {
 				read(fds[i].fd, incoming, 255);
-				printf("Incoming from %d: %s\n", fds[i].fd, incoming);
+				if(i==0) {							//Read message from server
+					printf("Incoming message from %d: %s\n", fds[i].fd, incoming);
+				}
+				if(i==1) {							//Send message to server
+					write(sockfd, incoming, 255);
+				}
 			}
 		}
 		bzero((char*)incoming, 256);
