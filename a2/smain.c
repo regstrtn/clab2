@@ -111,6 +111,24 @@ void fillclientdetails(cli *a, int *ctr, int newsockfd) {
 	showonline(a-(*ctr));
 }
 
+void handlemessage(cli* clilist, int* ctr, msg* mbuffer, int *q) {
+		cli* me = clilist+((*ctr)-1);
+		char b[256] = {0};
+		sprintf(b, "ID: %d Name: %s fd: %d\n", me->id, me->name, me->fd);
+		write(me->fd, b, 255);
+		bzero(b, 256);
+		while(1) {
+			read(me->fd, b, 255);
+			if(strcmp(b, "+online\n")==0) {
+				//write(me->fd, "So you want to see online users? :)", 255);
+				char *onlineusers = showonline(clilist-(*ctr));
+				write(me->fd, onlineusers, 255);
+			}
+			write(me->fd, b, 255);
+			bzero((char*)b, 256);
+		}
+}
+
 void handleclients(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 	cli* me = clilist+((*ctr)-1);
 	char b[256] = {0}; 
@@ -196,7 +214,8 @@ int main() {
 			(*ctr)++;
 			pid = fork();
 			if(pid == 0) {	//Child process
-				handleclients(clilist, ctr, mbuffer, q);
+				//handleclients(clilist, ctr, mbuffer, q);
+				handlemessage(clilist, ctr, mbuffer, q);
 			}
 			else if(pid >0) {	//Parent process
 				close(newsockfd);

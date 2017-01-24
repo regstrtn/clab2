@@ -44,20 +44,22 @@ int main() {
 	while(1) {
 		usleep(1000*100);
 		int r = poll(fds, 2, -1);
+		printf("Poll cleared\n");
 		int i;
 		for(i = 0;i<2;i++) {
 			if(fds[i].revents & POLLIN) {
 				bzero((char*)incoming, 256);
-				read(fds[i].fd, incoming, 255);
+				int bytesread = read(fds[i].fd, incoming, 255);
 				if(i==0) {	
-					if(incoming[0] == 0) {
+					if(bytesread<=0) {
 						printf("Server disconnected\n");
-						exit(0);
-					}	
-					printf("Incoming message from %d: %s\n", fds[i].fd, incoming);
-					bzero((char*)incoming, 256);
+					}
+					else {
+						printf("Incoming message from %d: %s\n", fds[i].fd, incoming);
+						bzero((char*)incoming, 256);
+					}
 				}
-				if(i==1) {							//Send message to server
+				else if(i==1) {							//Send message to server
 					write(sockfd, incoming, 255);
 					bzero((char*)incoming, 256);
 				}
