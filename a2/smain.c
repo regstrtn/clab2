@@ -14,7 +14,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include "sighandler.c"
-#define MAXCLIENTS 2
+#define MAXCLIENTS 5
 
 typedef struct {
 	int id;
@@ -50,30 +50,16 @@ char* showonline(cli* clilist) {
 	return b;
 }
 
-void retrievemessages(msg *mbuffer, int *q, cli* clilist) {
-	//Send message to correct client
-	msg *curr = mbuffer + q[1];
-	int i;
-	while(1) {
-		if(q[1]==q[0]) {
-			usleep(100*1000); 
-			continue;
-		}
-		char *r = curr->recname;
-		for(i=0;i<5;i++) {
-			if(strcmp(clilist[i].name, r)==0) {
-				break;
-			}
-		}
-		if(i==5) printf("Receiver %s does not exist\n", r);
-		else {
-			printf("Value of i: %d\n", i);
-			printf("Intended receiver: %s id: %d fd: %d\n", clilist[i].name, clilist[i].id, clilist[i].fd);
-			printf("Message: %s\n", curr->message);
-		}
-		printf("Curr message: %s\n", curr->message);
-		write(clilist[i].fd, curr->message, 255);
-		curr = curr+1;
+void checkmsgq(cli* me, int* ctr, msg *mbuffer, int *q) {
+	printf("From checkmsgq: %s\n", me->name);
+	if(q[1]>=q[0]) return;
+	int rear = q[1];
+	printf("q0 %d q1 %d procname %s recname %s message %s\n", q[0], q[1], me->name, mbuffer[rear].recname, mbuffer[rear].message);
+	if(strcmp(mbuffer[rear].recname, me->name)==0) {
+		char b[256] = {0};
+		printf("Message is for %s %s. FD: %d\n", me->name, mbuffer[rear].message, me->fd);
+		write(me->fd, mbuffer[rear].sendername, 255);
+		write(me->fd, mbuffer[rear].message, 255);
 		q[1]++;
 	}
 }
@@ -122,25 +108,30 @@ void handlemessage(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 		write(me->fd, onlineusers, 255);
 		while(1) {
 			msg m1;
-			read(me->fd, m1.message, 255);
-			if(strcmp(m1.message, "+online\n")==0) {
-				//write(me->fd, "So you want to see online users? :)", 255);
-				onlineusers = showonline(clilist-(*ctr));
-				write(me->fd, onlineusers, 255);
-				continue;
+			checkmsgq(me, ctr, mbuffer, q);
+			int bytesread = read(me->fd, m1.message, 255);
+			sleep(1); printf("Myname: %s\n", me->name);
+			if(bytesread>0) {
+				if(strcmp(m1.message, "+online\n")==0) {
+					//write(me->fd, "So you want to see online users? :)", 255);
+					onlineusers = showonline(clilist-(*ctr));
+					write(me->fd, onlineusers, 255);
+					continue;
+				}
+				char *rec = getrecname(m1.message);
+				char *text = getmsg(m1.message);
+				strcpy(m1.recname, rec);
+				strcpy(m1.sendername, me->name);
+				strcpy(m1.message, text);
+				m1.mtime = time(0);
+				enqueue(m1, mbuffer, q);
 			}
-			char *rec = getrecname(m1.message);
-			char *text = getmsg(m1.message);
-			strcpy(m1.recname, rec);
-			strcpy(m1.message, text);
-			m1.mtime = time(0);
-			enqueue(m1, mbuffer, q);
-			write(me->fd, m1.message, 255);
+			//write(me->fd, m1.message, 255);
 		}
 }
 
 int allowconnection(int *ctr) {
-	if(*ctr >3) return 0;
+	if(*ctr > MAXCLIENTS) return 0;
 	return 1;
 }
 
@@ -152,6 +143,7 @@ int main() {
 	portno = 5001;
 	signal(SIGINT, sighandler);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	fcntl(sockfd, F_SETFL, O_NONBLOCK);
 	int reuse = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
 	if(sockfd == -1) {
@@ -181,13 +173,18 @@ int main() {
 	*ctr = 0;
 	q[0] = 0; q[1] = 0;
 	
+	/*
 	int pid1 = fork(); 							//Create a new process P for delivering messages
 	if(pid1==0) {
 		retrievemessages(mbuffer, q, clilist);
-	}
+	} 
+	//Actually this way of retrieving messages will not work. Forget about it. 
+	*/
 	while(1) {
-		sleep(1);
-		newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len);
+		if((newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len))==-1) {
+			continue;
+		}
+		fcntl(newsockfd, F_SETFL, O_NONBLOCK);
 		if(allowconnection(ctr)) {
 			fillclientdetails(clilist+(*ctr), ctr, newsockfd);
 			(*ctr)++;
@@ -196,7 +193,7 @@ int main() {
 				handlemessage(clilist, ctr, mbuffer, q);
 			}
 			else if(pid >0) {	//Parent process
-				close(newsockfd);
+				//close(newsockfd);
 				continue;
 			}
 		}

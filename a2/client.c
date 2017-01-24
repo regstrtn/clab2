@@ -44,7 +44,6 @@ int main() {
 	while(1) {
 		usleep(1000*100);
 		int r = poll(fds, 2, -1);
-		printf("Poll cleared\n");
 		int i;
 		for(i = 0;i<2;i++) {
 			if(fds[i].revents & POLLIN) {
@@ -55,7 +54,8 @@ int main() {
 						printf("Server disconnected\n");
 					}
 					else {
-						printf("Incoming message from %d: %s\n", fds[i].fd, incoming);
+						printf("%s\n", incoming);
+						fflush(NULL);
 						bzero((char*)incoming, 256);
 					}
 				}
