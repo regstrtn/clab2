@@ -71,7 +71,8 @@ void retrievemessages(msg *mbuffer, int *q, cli* clilist) {
 			printf("Intended receiver: %s id: %d fd: %d\n", clilist[i].name, clilist[i].id, clilist[i].fd);
 			printf("Message: %s\n", curr->message);
 		}
-		//write(clilist[i].fd, curr->message, 255);
+		printf("Curr message: %s\n", curr->message);
+		write(clilist[i].fd, curr->message, 255);
 		curr = curr+1;
 		q[1]++;
 	}
@@ -96,7 +97,7 @@ char* getrecname(char *rawmsg) {
 
 char *getmsg(char *rawmsg) {
 	int colonpos = (int)(strchr(rawmsg, ':')-rawmsg);
-	char *msg = (char*)malloc(256*sizeof(char));
+	char *msg = (char*)malloc(30*sizeof(char));
 	strncpy(msg, rawmsg+colonpos+1, strlen(rawmsg)-colonpos);
 	msg[100] = '\0';
 	return  msg;
@@ -117,51 +118,29 @@ void handlemessage(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 		sprintf(b, "ID: %d Name: %s fd: %d\n", me->id, me->name, me->fd);
 		write(me->fd, b, 255);
 		bzero(b, 256);
+		char *onlineusers = showonline(clilist-(*ctr));
+		write(me->fd, onlineusers, 255);
 		while(1) {
-			read(me->fd, b, 255);
-			if(strcmp(b, "+online\n")==0) {
+			msg m1;
+			read(me->fd, m1.message, 255);
+			if(strcmp(m1.message, "+online\n")==0) {
 				//write(me->fd, "So you want to see online users? :)", 255);
-				char *onlineusers = showonline(clilist-(*ctr));
+				onlineusers = showonline(clilist-(*ctr));
 				write(me->fd, onlineusers, 255);
+				continue;
 			}
-			write(me->fd, b, 255);
-			bzero((char*)b, 256);
+			char *rec = getrecname(m1.message);
+			char *text = getmsg(m1.message);
+			strcpy(m1.recname, rec);
+			strcpy(m1.message, text);
+			m1.mtime = time(0);
+			enqueue(m1, mbuffer, q);
+			write(me->fd, m1.message, 255);
 		}
-}
-
-void handleclients(cli* clilist, int* ctr, msg* mbuffer, int *q) {
-	cli* me = clilist+((*ctr)-1);
-	char b[256] = {0}; 
-	/*
-	while(1) {
-		bzero((char*)b, 256);
-		read(me->fd, b, 255);
-		write(me->fd, b, 255);
-	} */
-	sprintf(b, "ID: %d Name: %d fd: %d\n", me->id, me->name, me->fd);
-	write(me->fd, b, 256);
-	write(me->fd, showonline(clilist), 256);
-	int counter = 0;
-	while(1) {
-		msg newmsg;
-		read(me->fd, newmsg.message, 255);
-		if(strcmp(newmsg.message, "+online")==0) {
-			showonline(clilist-(*ctr));
-		}
-		char* rec = getrecname(newmsg.message);
-		char *msgtxt = getmsg(newmsg.message);
-		strcpy(newmsg.recname, rec);
-		strcpy(newmsg.message, msgtxt);
-		newmsg.mtime = time(0);
-		enqueue(newmsg, mbuffer, q);
-		counter++;
-		//if(counter%3==0) retrievemessages(mbuffer, q, clilist);
-	}
-
 }
 
 int allowconnection(int *ctr) {
-	if(*ctr >1) return 0;
+	if(*ctr >3) return 0;
 	return 1;
 }
 
@@ -214,7 +193,6 @@ int main() {
 			(*ctr)++;
 			pid = fork();
 			if(pid == 0) {	//Child process
-				//handleclients(clilist, ctr, mbuffer, q);
 				handlemessage(clilist, ctr, mbuffer, q);
 			}
 			else if(pid >0) {	//Parent process
@@ -223,7 +201,7 @@ int main() {
 			}
 		}
 		else {
-			write(newsockfd, "Connection limit exceeded\n", 30);
+			write(newsockfd, "Connection limit exceeded\n", 255);
 			close(newsockfd);
 			continue;
 		}
