@@ -57,6 +57,7 @@ int main() {
 				if(i==0) {	
 					if(bytesread<=0) {
 						printf("Server disconnected\n");
+						exit(0);
 					}
 					else {
 						printf("%s\n", incoming);
