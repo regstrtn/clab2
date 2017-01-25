@@ -17,8 +17,14 @@
 
 extern int sockfd;
 
-void randmessages(int sockfd) {
-	
+void clearinput(char *incoming) {
+	printf("%c[2A\r%c[2K\r",27,27);
+	printf("%c[1A\r%c[2K\r",27,27);
+	printf("\r%c[2K\r",27);
+	if(strchr(incoming, '+')==NULL) 
+		printf("%*s%s\n_____________________________________________\n", 20, "ME:",incoming+8);
+	else 
+		printf("%s_____________________________________________\n", incoming);
 }
 
 int main() {
@@ -64,13 +70,15 @@ int main() {
 						exit(0);
 					}
 					else {
-						printf("%s\n", incoming);
+						//printf("--------------------------------------------\n");
+						//printf("%c[1A\r%c[2K\r\n\r%c[2K\r%s\n--------------------------------------------\n", 27,27, 27, incoming);
+						printf("%s", incoming);
 						fflush(NULL);
 						bzero((char*)incoming, 256);
 					}
 				}
 				else if(i==1) {							//Send message to server
-					randmessages(sockfd);
+					//clearinput(incoming);
 					write(sockfd, incoming, 255);
 					bzero((char*)incoming, 256);
 				}

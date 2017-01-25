@@ -13,7 +13,7 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <fcntl.h>
-#define MAXCLIENTS 4
+#define MAXCLIENTS 40
 
 typedef struct {
 	int id;
@@ -198,7 +198,8 @@ void fillclientdetails(cli *a, int *ctr, int newsockfd) {
 void handlemessage(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 		cli* me = clilist+((*ctr)-1);
 		char b[256] = {0};
-		sprintf(b, "ID: %d Name: %s fd: %d randomid: %d randomstring: %s\n", me->id, me->name, me->fd, me->rid, me->rname);
+		write(me->fd, "Welcome to RobustChat. You have been connected. Happy chatting. :)\n", 255);
+		sprintf(b, "Name: %s \nRandomID: %d Randomstring: %s\n", me->name, me->rid, me->rname);
 		write(me->fd, b, 255);
 		bzero(b, 256);
 		char *onlineusers = showonline(clilist);
@@ -264,7 +265,7 @@ int main() {
 
 	int ctrid = shmget(IPC_PRIVATE, sizeof(int), 0666|IPC_CREAT);
 	int* ctr = (int*)shmat(ctrid, 0, 0);
-	int clilistid = shmget(IPC_PRIVATE, 5*sizeof(cli), 0666|IPC_CREAT);
+	int clilistid = shmget(IPC_PRIVATE, MAXCLIENTS*sizeof(cli), 0666|IPC_CREAT);
 	cli* clilist = (cli*)shmat(clilistid, 0, 0);
 	int mbufferid = shmget(IPC_PRIVATE, 100*sizeof(msg), 0666|IPC_CREAT);
 	msg *mbuffer = (msg*)shmat(mbufferid, 0, 0);
