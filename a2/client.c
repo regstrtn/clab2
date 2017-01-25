@@ -17,6 +17,10 @@
 
 extern int sockfd;
 
+void randmessages(int sockfd) {
+	
+}
+
 int main() {
 	//int sockfd;
 	int portno, n;
@@ -66,6 +70,7 @@ int main() {
 					}
 				}
 				else if(i==1) {							//Send message to server
+					randmessages(sockfd);
 					write(sockfd, incoming, 255);
 					bzero((char*)incoming, 256);
 				}

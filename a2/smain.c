@@ -34,6 +34,14 @@ typedef struct {
 	time_t mtime;
 } msg;
 
+void sighandler(int signo) {
+	if(signo == SIGINT) {
+		sem_unlink("/mbuffsem");
+		sem_unlink("/q");
+		exit(0);
+	}
+}
+
 //Return receiver name from the message
 char* getrecname(char *rawmsg) {
 	int colonpos = (int)(strchr(rawmsg, ':')-rawmsg);
@@ -127,9 +135,15 @@ void enqueue(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
 		write(sender->fd, "This client has disconnected\n", 255);
 		return;
 	}
-	msg* curr = mbuffer + q[0];
+	sem_t* mbuffsem = sem_open("/mbuff", 0);
+	sem_wait(mbuffsem);
+	FILE *fp = fopen("log", "a");
+	msg* curr = mbuffer + q[0];	
 	q[0]++;
 	*curr = m1; 				//Structs can be copied in C
+	fprintf(fp, "%s:%s:%s", m1.sendername, m1.recname, m1.message);
+	fclose(fp);
+	sem_post(mbuffsem);
 }
 
 
@@ -157,7 +171,8 @@ void broadcast(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
 			sprintf(m1.message, "%s is now offline.", sender->name);
 		}
 		strcpy(m1.recname, clilist[i].name);
-		enqueue(m1, mbuffer, q, clilist, sender);
+		if(strcmp(m1.recname, sender->name)!=0)
+			enqueue(m1, mbuffer, q, clilist, sender);
 	}
 }
 
@@ -202,6 +217,7 @@ void handlemessage(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 					continue;
 				}
 				if(strcmp(m1.message, "+exit\n")==0) {
+					broadcast(m1, mbuffer, q, clilist, me);
 					disconnect(mbuffer, q, clilist, me);
 					continue;
 				}
@@ -256,7 +272,10 @@ int main() {
 	int *q = (int*)shmat(qid, 0, 0);
 	*ctr = 0;
 	q[0] = 0; q[1] = 0;
-	
+
+	sem_t *qsem = sem_open("/q", O_CREAT|O_EXCL, 0644, 1);
+	sem_t *mbuffsem = sem_open("/mbuff", O_CREAT|O_EXCL, 0644, 1);
+	signal(SIGINT, sighandler);	
 	/*
 	int pid1 = fork(); 							//Create a new process P for delivering messages
 	if(pid1==0) {
