@@ -13,15 +13,20 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <poll.h>
+#include "sighandler.c"
+
+extern int sockfd;
 
 int main() {
-	int sockfd, portno, n;
+	//int sockfd;
+	int portno, n;
 	struct hostent* host;
 	struct sockaddr_in serv;
 	char *buffer = NULL;
 	char incoming[256];
 	size_t len;
 	portno = 5001;
+	signal(SIGINT, sighandler);		//Register signal handler
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	int reuse = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
