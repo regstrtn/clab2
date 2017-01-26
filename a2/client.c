@@ -71,7 +71,7 @@ int main() {
 		{sockfd, POLLIN},
 		{0, POLLIN}
 	};
-	sendlotsmessages(sockfd);
+	//sendlotsmessages(sockfd);
 	while(1) {
 		usleep(1000*100);
 		int r = poll(fds, 2, -1);

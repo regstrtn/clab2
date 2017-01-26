@@ -23,10 +23,19 @@ def readfile():
 	for key in clients:
 		print(key, clients[key])
 	
-	plt.plot(clients.values())
-	plt.xticks(range(1, 6), clients.keys())
+	#objects = ('Python', 'C++', 'Java', 'Perl', 'Scala', 'Lisp')
+	objects = clients.keys()
+	y_pos = np.arange(len(objects))
+	performance = clients.values()
+	plt.bar(y_pos, performance, align='center', alpha=0.5)
+	plt.xticks(y_pos, objects)
+	plt.ylabel('Bytes sent')
+	plt.title('Server load graph')
+	plt.savefig("barplot.png")
+	plt.close()
+	#plt.show()
 	
-	plt.show()
+	
 
 def heatmap():
 	f = open("log", "r")
@@ -38,8 +47,6 @@ def heatmap():
 		clients[s[1]][s[0]] = 0
 		
 	f.seek(0,0)
-	
-
 	for line in f:
 		s = line.split('|')
 		clients[s[0]][s[1]] += len(s[3])
@@ -49,21 +56,26 @@ def heatmap():
 
 	msg = []
 	for key in clients.keys():
+		clients[key][key] = 0
+	for key in clients.keys():
 		msg.append(clients[key].values())
-	
-	print(msg)
-	
 	msg = np.array(msg)
-	heatmap = plt.pcolor(msg, cmap=matplotlib.cm.hot)
+	np.savetxt('foo.csv', msg, delimiter = ",", fmt = '%6.0f')
+	heatmap = plt.pcolor(msg, cmap=matplotlib.cm.Blues)
+	xlab = clients.keys()
+	y_pos = np.arange(len(xlab))
+	plt.xticks(y_pos, xlab)
+	plt.yticks(y_pos, xlab)
+	#plt.xticks(clients.keys())
+	#plt.yticks(clients.keys())
+	plt.title('Clientwise message heatmap')
 	plt.colorbar()
-	plt.show()
-	
-	plt.colormesh(msg)
-	plt.show()
+	#plt.show()
+	plt.savefig("heatmap.png")
 
 
 def main():
-	#readfile()
+	readfile()
 	heatmap()
 
 if __name__ == '__main__':
