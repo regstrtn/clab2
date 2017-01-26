@@ -54,7 +54,8 @@ void sighandler(int signo) {
 void printclientdetails(cli *a) {
 	printf("Printing details of %s : ", a->name);
 	printf("%d %d %ld random id: %d random name: %s\n", a->id, a->fd, a->conntime, a->rid, a->rname);
-	write(a->fd, "\nCommands available - \n1.+online ----- Show online users\n2.broadcast:<message> ---- Broadcast to all clients\n3.Ctrl+c ----- Exit chat.\n4.To send message, type <client>:<message>\n\n", 255);
+	write(a->fd, "--------------------------------------------\n", 255);
+	write(a->fd, "\nCommands available - \n1.+online            -- Show online users\n2.broadcast:<msg>    -- Broadcast to all clients\n3.Ctrl+c             -- Exit chat.\n4.To send message, type <client>:<message>\n\n", 255);
 	write(a->fd, "--------------------------------------------\n", 255);
 }
 
@@ -191,7 +192,7 @@ void enqueue(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
 	msg* curr = mbuffer + q[0];	
 	q[0]++;
 	*curr = m1; 													//Structs can be copied in C
-	fprintf(fp, "%s:%s:%s", m1.sendername, m1.recname, m1.message);
+	fprintf(fp, "%s|%s|%ld|%s", m1.sendername, m1.recname, m1.mtime, m1.message);
 	fclose(fp);
 	sem_post(mbuffsem);
 }
@@ -243,10 +244,10 @@ void fillclientdetails(cli *a, int *ctr, int newsockfd) {
     a->rname[10] = '\0';
 	a->fd = newsockfd;
 	a->status = 1;
-	a->conntime = time(0)%10000;
+	a->conntime = time(0);
 	char b[256] = {0};
-	write(a->fd, "Welcome to RobustChat. You have been connected. Happy chatting. :)\n", 255);
-	sprintf(b, "Name: %s \nRandomID: %d Randomstring: %s\n", a->name, a->rid, a->rname);
+	write(a->fd, "Welcome to RobustChat. You have been connected. Happy chatting. :)\n\n", 255);
+	sprintf(b, "Name        : %s \nRandomID    : %d\nRandomstring: %s\nTime        : %s\n", a->name, a->rid, a->rname, ctime(&(a->conntime)));
 	write(a->fd, b, 255);
 	bzero(b, 256);
 	printclientdetails(a);
@@ -349,7 +350,8 @@ int main() {
 	arg.q = q;
 	pthread_create(&tid, NULL, retrieve, (void*)&arg);
 	*/
-	
+	int i; for(i=0;i<MAXCLIENTS;i++) {clilist[i].status = -10;}
+
 	while(1) {
 		if((newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &cli_len))==-1) {
 			continue;

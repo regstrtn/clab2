@@ -27,6 +27,20 @@ void clearinput(char *incoming) {
 		//printf("%s------------------------------------------------------\n", incoming);
 }
 
+void sendlotsmessages(int sockfd) {
+	char *clients[] = {"broadcast", "client0", "client1", "client3", "client4", "client5"};
+	char *msg[] = {"lorem", "ipsum", "dolor", "sit", "amet", "computing lab", "assignment"};
+	int i;
+	sleep(30);
+	for(i=0;i<100;i++) {
+		char b[256] = {0};
+		int c = rand()%6;
+		int m = rand()%7;
+		sprintf(b, "%s:%s\n", clients[c], msg[m]);
+		write(sockfd, b, 255);
+	}
+}
+
 int main() {
 	//int sockfd;
 	int portno, n;
@@ -56,6 +70,7 @@ int main() {
 		{sockfd, POLLIN},
 		{0, POLLIN}
 	};
+	//sendlotsmessages(sockfd);
 	while(1) {
 		usleep(1000*100);
 		int r = poll(fds, 2, -1);
