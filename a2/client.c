@@ -18,13 +18,13 @@
 extern int sockfd;
 
 void clearinput(char *incoming) {
-	printf("%c[2A\r%c[2K\r",27,27);
+	//printf("%c[2A\r%c[2K\r",27,27);
 	printf("%c[1A\r%c[2K\r",27,27);
 	printf("\r%c[2K\r",27);
 	if(strchr(incoming, '+')==NULL) 
-		printf("%*s%s\n_____________________________________________\n", 20, "ME:",incoming+8);
-	else 
-		printf("%s_____________________________________________\n", incoming);
+		printf("%*s%s\n------------------------------------------------------\n", 30, "ME:",incoming+8);
+	else ;
+		//printf("%s------------------------------------------------------\n", incoming);
 }
 
 int main() {
@@ -70,9 +70,9 @@ int main() {
 						exit(0);
 					}
 					else {
-						//printf("--------------------------------------------\n");
 						//printf("%c[1A\r%c[2K\r\n\r%c[2K\r%s\n--------------------------------------------\n", 27,27, 27, incoming);
 						printf("%s", incoming);
+						//printf("--------------------------------------------\n");
 						fflush(NULL);
 						bzero((char*)incoming, 256);
 					}
