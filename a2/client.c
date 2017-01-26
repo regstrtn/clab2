@@ -32,7 +32,8 @@ void sendlotsmessages(int sockfd) {
 	char *msg[] = {"lorem", "ipsum", "dolor", "sit", "amet", "computing lab", "assignment"};
 	int i;
 	sleep(30);
-	for(i=0;i<100;i++) {
+	int num = rand()%100+100;
+	for(i=0;i<num;i++) {
 		char b[256] = {0};
 		int c = rand()%6;
 		int m = rand()%7;
@@ -70,7 +71,7 @@ int main() {
 		{sockfd, POLLIN},
 		{0, POLLIN}
 	};
-	//sendlotsmessages(sockfd);
+	sendlotsmessages(sockfd);
 	while(1) {
 		usleep(1000*100);
 		int r = poll(fds, 2, -1);

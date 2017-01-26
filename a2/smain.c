@@ -187,14 +187,14 @@ void enqueue(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
 		return;
 	}
 	sem_t* mbuffsem = sem_open("/mbuff", 0);
-	sem_wait(mbuffsem);
+	//sem_wait(mbuffsem);
 	FILE *fp = fopen("log", "a");
 	msg* curr = mbuffer + q[0];	
 	q[0]++;
 	*curr = m1; 													//Structs can be copied in C
 	fprintf(fp, "%s|%s|%ld|%s", m1.sendername, m1.recname, m1.mtime, m1.message);
 	fclose(fp);
-	sem_post(mbuffsem);
+	//sem_post(mbuffsem);
 }
 
 //Gracefully disconnect a client and close server process
