@@ -127,17 +127,17 @@ void *retrieve(void* vargp) {
 	int i;
 	printf("I will print details of all clients\n");
 	while(1) {
-		for(i=q[1];i<q[0];i++) {
-			printf("message: %s to %s:%s\n",mbuffer[i].sendername, mbuffer[i].recname, mbuffer[i].message);
-		}
 		if(q[1]>=q[0]) continue;
 		rear = q[1];
 		msg m1 = mbuffer[rear];
+		for(i=q[1];i<q[0];i++) {
+			printf("message: %s to %s:%s\n",mbuffer[i].sendername, mbuffer[i].recname, mbuffer[i].message);
+		}
 		for(i=0;i<MAXCLIENTS;i++) {
 			if(strcmp(clilist[i].name, m1.recname)==0) {
 				if(clilist[i].status<0) {
-					q[1]++;
-					break;
+					//q[1]++;
+					//break;
 				}
 				char b[256] = {0};
 				//printf("Message is for %s %s. FD: %d\n", me->name, mbuffer[rear].message, me->fd);
@@ -261,7 +261,7 @@ void handlemessage(cli* clilist, int* ctr, msg* mbuffer, int *q) {
 		write(me->fd, onlineusers, 255);			//Show online users on connection
 		while(1) {
 			msg m1;
-			checkmsgq(me, ctr, mbuffer, q);			//Check for messages
+			//checkmsgq(me, ctr, mbuffer, q);			//Check for messages
 			int bytesread = read(me->fd, m1.message, 255);
 			usleep(1000*10); //printf("Message: %s From: %s\n", m1.message, me->name);
 			if(bytesread>0) {
@@ -341,7 +341,6 @@ int main() {
 	sem_t *mbuffsem = sem_open("/mbuff", O_CREAT|O_EXCL, 0644, 1);
 	signal(SIGINT, sighandler);	
 	
-	/*
 	//Uncomment this block for multithreaded chat
 	pthread_t tid;
 	thread_arg arg;
@@ -349,7 +348,7 @@ int main() {
 	arg.clients = clilist;
 	arg.q = q;
 	pthread_create(&tid, NULL, retrieve, (void*)&arg);
-	*/
+
 	int i; for(i=0;i<MAXCLIENTS;i++) {clilist[i].status = -10;}
 
 	while(1) {
