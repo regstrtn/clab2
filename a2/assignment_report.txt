@@ -1,7 +1,7 @@
-************************************SUMMARY REPORT******************************************** 
+# Robust Chat
 ______________________________________________________________________________________________
 
-SUMMARY 
+### SUMMARY 
 ------------------------
 
 Built a simple server client chat application with the following specifications: 
@@ -13,7 +13,7 @@ Built a simple server client chat application with the following specifications:
 5. On connection, each client is assigned a 5 digit random ID and a 10 character long random name.
 _______________________________________________________________________________________________
 									
-IMPLEMENTATION DETAILS
+### IMPLEMENTATION DETAILS
 -------------------------
 
 *CLIENT SIDE: 
@@ -32,12 +32,12 @@ IMPLEMENTATION DETAILS
 
 _________________________________________________________________________________________________
 
-TEST CASES
+### TEST CASES
 ---------------------------
 
 -----------------------------------------------------------------
 |	ID 	|				TEST CASE 								| 		
------------------------------------------------------------------
+|---------------|--------------------------------------------------|
 |	1   | 	Client name not mentioned							|
 |	2 	| 	Client name does not exist							|
 |	3 	| 	Delimiter (colon) not present						|
@@ -53,12 +53,12 @@ TEST CASES
 
 __________________________________________________________________________________________________
 
-TESTING REPORT 
+### TESTING REPORT 
 ---------------------------
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 |  ID	| 	Input                       | Expected Output	  					|	Actual Output							| Result	|
------------------------------------------------------------------------------------------------------------------------------------------
+|--------|---------------------------------|---------------------|--------------------------|-------------------------------------------------|
 |	1 	|	message 					| Please include client name or command	| Please include client name or command		| Passed	|
 |	2	| 	client6:message  			| Client does not exist					| Client does not exist						| Passed	|
 |	3	| 	client0:message (in client0)| Cannot send messages to yourself		| Cannot send message to yourself			| Passed	|
@@ -66,4 +66,3 @@ TESTING REPORT
 | 	5	| 	Server crashed				| Server disconnected					| Server disconnected						| Passed	| 
 | 	6	| 	using a busy Port 			| Port busy								| Port busy									| Passed	|
 | 	7 	| 	+command					| Please include client name or command | Please include a client name or command 	| Passed	|
------------------------------------------------------------------------------------------------------------------------------------------
