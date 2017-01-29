@@ -17,13 +17,17 @@
 
 extern int sockfd;
 
-void clearinput(char *incoming) {
-	//printf("%c[2A\r%c[2K\r",27,27);
+void clearinput(char *incoming, int prev) {
+	//if(prev)	printf("%c[2A\r%c[2K\r", 27, 27);
+	//if(prev)	printf("%c[1A\r%c[2K\r",27,27);
 	printf("%c[1A\r%c[2K\r",27,27);
-	printf("\r%c[2K\r",27);
-	if(strchr(incoming, '+')==NULL) 
-		printf("%*s%s\n------------------------------------------------------\n", 30, "ME:",incoming+8);
-	else ;
+	int charstoreplace = 8;
+	if(strncmp(incoming, "broadcast:", 10)==0) printf("%s", incoming);
+	else {
+		printf("\r%c[2K\r",27);
+		if(strchr(incoming, '+')==NULL) 
+			printf("%*s%s", 10, "ME:",incoming+charstoreplace);
+	}
 		//printf("%s------------------------------------------------------\n", incoming);
 }
 
@@ -72,15 +76,17 @@ int main() {
 		{0, POLLIN}
 	};
 	//sendlotsmessages(sockfd);
+	int prev = 0;
 	while(1) {
 		usleep(1000*100);
 		int r = poll(fds, 2, -1);
-		int i;
+		int i; 
 		for(i = 0;i<2;i++) {
 			if(fds[i].revents & POLLIN) {
 				bzero((char*)incoming, 256);
 				int bytesread = read(fds[i].fd, incoming, 255);
-				if(i==0) {	
+				if(i==0) {
+					prev = 0;	
 					if(bytesread<=0) {
 						printf("Server disconnected\n");
 						exit(0);
@@ -94,7 +100,8 @@ int main() {
 					}
 				}
 				else if(i==1) {							//Send message to server
-					//clearinput(incoming);
+					clearinput(incoming, prev);
+					prev = 1;
 					write(sockfd, incoming, 255);
 					bzero((char*)incoming, 256);
 				}

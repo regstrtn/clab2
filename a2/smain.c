@@ -14,8 +14,9 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <pthread.h>
-#define MAXCLIENTS 40
+#define MAXCLIENTS 5
 
+//Client information structure
 typedef struct {
 	int id;
 	char name[30];
@@ -26,6 +27,7 @@ typedef struct {
 	time_t conntime;
 } cli;
 
+//Structure for storing messages
 typedef struct {
 	char message[256];
 	char recname[30];
@@ -42,6 +44,7 @@ typedef struct {
 	int* q;
 } thread_arg;
 
+
 //Unlink semaphores before exiting
 void sighandler(int signo) {
 	if(signo == SIGINT) {
@@ -51,6 +54,7 @@ void sighandler(int signo) {
 	}
 }
 
+//Send client details on connection
 void printclientdetails(cli *a) {
 	printf("Printing details of %s : ", a->name);
 	printf("%d %d %ld random id: %d random name: %s\n", a->id, a->fd, a->conntime, a->rid, a->rname);
@@ -92,12 +96,14 @@ char* showonline(cli* clilist) {
 	return b;
 }
 
-//Check message queue on demand and deliver message if present
+//Check message queue periodically and deliver message if present
 void checkmsgq(cli* me, int* ctr, msg *mbuffer, int *q) {
 	if(q[1]>=q[0]) return;
 	int rear = q[1];
 	int i;
 	cli * clilist = me - (*ctr-1);
+	sem_t *mbuff = sem_open("/mbuff", 0, 0);
+	sem_wait(mbuff);
 	//Delete message if receiver has gone offline
 	for(i=0;i<MAXCLIENTS;i++) {
 		if(strcmp(mbuffer[rear].recname, clilist[i].name)==0) {
@@ -115,9 +121,10 @@ void checkmsgq(cli* me, int* ctr, msg *mbuffer, int *q) {
 		write(me->fd, b, 255);
 		q[1]++;
 	}
+	sem_post(mbuff);
 }
 
-//This function will be used by multithreaded chat version
+//This function will be used by multithreaded chat version. This is not being used as of now
 void *retrieve(void* vargp) {
 	thread_arg* args = vargp;
 	cli* clilist = args->clients;
@@ -143,22 +150,22 @@ void *retrieve(void* vargp) {
 				//printf("Message is for %s %s. FD: %d\n", me->name, mbuffer[rear].message, me->fd);
 				sprintf(b, "%s:%s", mbuffer[rear].sendername, mbuffer[rear].message);
 				write(clilist[i].fd, b, 255);
-				q[1]++;
+				q[1]++;						//Critical section
 			}
 		}
 	}
 }
 
+
 //Enqueue messages to message queue
 void enqueue(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
-	//Put message in message buffer queue
 	int i;
 	if(strchr(m1.message, ':')!=NULL && m1.recname[0]==0) {			
 		//Check if receiver name is mentioned. If not, then check if receivername is already mentioned in m1.recname
 		//For broadcast messages, receiver name is already set in m1.recname
 		char *r = getrecname(m1.message);
 		if(r[0]==0) {
-			write(sender->fd, "Please include client name.\n", 255);
+			write(sender->fd, "Please include client name or a command.\n", 255);
 			return;
 		}
 		char *text = getmsg(m1.message);
@@ -167,7 +174,7 @@ void enqueue(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
 	}
 	else if(m1.recname[0]==0 && strchr(m1.message, ':')==NULL){
 		//Client name not present in either message or m1.recname variable
-		write(sender->fd, "Please include client name.\n", 255);
+		write(sender->fd, "Please include client name or a command.\n", 255);
 		return;
 	}
 	printf("Enqueueing messages of %s. Message: %s", m1.recname, m1.message);
@@ -186,15 +193,16 @@ void enqueue(msg m1, msg* mbuffer, int *q, cli* clilist, cli* sender) {
 		write(sender->fd, "This client has disconnected\n", 255);
 		return;
 	}
+	//Critical section
 	sem_t* mbuffsem = sem_open("/mbuff", 0);
-	//sem_wait(mbuffsem);
+	sem_wait(mbuffsem);
 	FILE *fp = fopen("log", "a");
 	msg* curr = mbuffer + q[0];	
 	q[0]++;
 	*curr = m1; 													//Structs can be copied in C
 	fprintf(fp, "%s|%s|%ld|%s", m1.sendername, m1.recname, m1.mtime, m1.message);
 	fclose(fp);
-	//sem_post(mbuffsem);
+	sem_post(mbuffsem);
 }
 
 //Gracefully disconnect a client and close server process
@@ -338,7 +346,15 @@ int main() {
 
 	//Create semaphores for synchronization
 	sem_t *qsem = sem_open("/q", O_CREAT|O_EXCL, 0644, 1);
+	if(errno==EEXIST) {
+		sem_unlink("/q");
+		qsem = sem_open("/q", O_CREAT|O_EXCL, 0644, 1);
+	}
 	sem_t *mbuffsem = sem_open("/mbuff", O_CREAT|O_EXCL, 0644, 1);
+	if(errno==EEXIST) {
+		sem_unlink("/mbuff");
+		mbuffsem = sem_open("/mbuff", O_CREAT|O_EXCL, 0644, 1);
+	}
 	signal(SIGINT, sighandler);	
 	
 	/*
