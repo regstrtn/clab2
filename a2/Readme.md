@@ -1,6 +1,6 @@
-************************************SUMMARY REPORT********************************************
+# Robust Chat
 ______________________________________________________________________________________________
-SUMMARY
+### SUMMARY
 ------------------------
 Built a simple server client chat application with the following specifications:
 1. Clients can message each other using client names, in the following format;
@@ -10,7 +10,7 @@ Built a simple server client chat application with the following specifications:
 4. Maximum 5 clients can connect at a time. Additional clients will not be allowed to connect in the same session, even if one of them later disconnects.
 5. On connection, each client is assigned a 5 digit random ID and a 10 character long random name.
 _______________________________________________________________________________________________
-IMPLEMENTATION DETAILS
+### IMPLEMENTATION DETAILS
 -------------------------
 *CLIENT SIDE:
 Using poll system call (similar to select system call) to wait for:
@@ -23,11 +23,11 @@ Well formatted incoming messages from clients are sent to the message queue. Not
 Messages from clients are added to a message queue. This message queue is checked continuously for any incoming messages.
 These messages are then delivered to their respective clients.
 _________________________________________________________________________________________________
-TEST CASES
+### TEST CASES
 ---------------------------
 -----------------------------------------------------------------
 | ID | TEST CASE |
------------------------------------------------------------------
+|---------------|--------------------------------------------------|
 | 1 | Client name not mentioned |
 | 2 | Client name does not exist |
 | 3 | Delimiter (colon) not present |
@@ -39,11 +39,11 @@ TEST CASES
 | 9 | Port being used by some other process |
 ----------------------------------------------------------------- |
 __________________________________________________________________________________________________
-TESTING REPORT
+### TESTING REPORT
 ---------------------------
 -----------------------------------------------------------------------------------------------------------------------------------------
 | ID | Input | Expected Output | Actual Output | Result |
------------------------------------------------------------------------------------------------------------------------------------------
+|--------|---------------------------------|---------------------|--------------------------|-------------------------------------------------|
 | 1 | message | Please include client name or command | Please include client name or command | Passed |
 | 2 | client6:message | Client does not exist | Client does not exist | Passed |
 | 3 | client0:message (in client0)| Cannot send messages to yourself | Cannot send message to yourself | Passed |
@@ -51,12 +51,3 @@ TESTING REPORT
 | 5 | Server crashed | Server disconnected | Server disconnected | Passed |
 | 6 | using a busy Port | Port busy | Port busy | Passed |
 | 7 | +command | Please include client name or command | Please include a client name or command | Passed |
------------------------------------------------------------------------------------------------------------------------------------------
-
-    Contact GitHub
-    API
-    Training
-    Shop
-    Blog
-    About
-
