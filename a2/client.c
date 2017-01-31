@@ -13,7 +13,6 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <poll.h>
-<<<<<<< Updated upstream
 #include "sighandler.c"
 
 extern int sockfd;
@@ -50,21 +49,13 @@ void sendlotsmessages(int sockfd) {
 int main() {
 	//int sockfd;
 	int portno, n;
-=======
-
-int main() {
-	int sockfd, portno, n;
->>>>>>> Stashed changes
 	struct hostent* host;
 	struct sockaddr_in serv;
 	char *buffer = NULL;
 	char incoming[256];
 	size_t len;
 	portno = 5001;
-<<<<<<< Updated upstream
 	signal(SIGINT, sighandler);		//Register signal handler
-=======
->>>>>>> Stashed changes
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	int reuse = 1;
 	setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&reuse, sizeof(reuse));
@@ -84,7 +75,6 @@ int main() {
 		{sockfd, POLLIN},
 		{0, POLLIN}
 	};
-<<<<<<< Updated upstream
 	//sendlotsmessages(sockfd);
 	int prev = 0;
 	while(1) {
@@ -112,25 +102,6 @@ int main() {
 				else if(i==1) {							//Send message to server
 					clearinput(incoming, prev);
 					prev = 1;
-=======
-	while(1) {
-		usleep(1000*100);
-		int r = poll(fds, 2, -1);
-		int i;
-		for(i = 0;i<2;i++) {
-			if(fds[i].revents & POLLIN) {
-				bzero((char*)incoming, 256);
-				read(fds[i].fd, incoming, 255);
-				if(i==0) {	
-					if(incoming[0] == 0) {
-						printf("Server disconnected\n");
-						exit(0);
-					}	
-					printf("Incoming message from %d: %s\n", fds[i].fd, incoming);
-					bzero((char*)incoming, 256);
-				}
-				if(i==1) {							//Send message to server
->>>>>>> Stashed changes
 					write(sockfd, incoming, 255);
 					bzero((char*)incoming, 256);
 				}

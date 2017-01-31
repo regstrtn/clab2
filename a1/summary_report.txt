@@ -1,24 +1,15 @@
 ************************************Summary Report******************************************* 
 
 Built a simple client server application with the following specifications: 
-
-Connection: 
------------
-
-1. Client creates a socket and connects to server using specified port number and hostname, using socket() and connect() system calls. 
-2. Server process runs on port 5000 and listens for incoming client connections. 
-3. Concurrent Server: Whenever a new client connects, server process creates a new child process using the fork() system call to handle the client request. The original process keeps waiting for new clients.
-
-Processing: 
------------
-
-1. Client sends a text string [a-zA-Z(blank)] with maximum length 30 and a pattern string [a-zA-Z] with maximum length 5 to the server. 
+1. Client sends a text string and a patter string to the server. 
 2. Server responds with the number of occurrences of the pattern in the text. 
 3. If no occurrences are found, server returns zero.
 4. Server is running on localhost. Port 5000.
 
 
-*************************************Test Cases***********************************************
+
+
+*************************************Test Cases*********************************************
 
 ---------------------------------------------------------------------------------------------
 |        Input                            | Expected Output                       | Result  |
@@ -33,7 +24,6 @@ Processing:
 |   alsdkjf; lkjs                         | Invalid characters                    | Passed  |
 |   lkjfas;;;lkj                          | Invalid characters                    | Passed  |
 |   ;                                     | Incorrect format                      | Passed  |
-|   Run client without server running     | Could not connect to server           | Passed  |
 ---------------------------------------------------------------------------------------------
 
-**********************************************************************************************
+
