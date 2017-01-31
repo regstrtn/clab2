@@ -24,10 +24,15 @@ int search(char buffer[]) {
 	return count;
 }
 
-int main() {
+int main(int argc, char** argv) {
+	if(argc<2) {
+		printf("Please enter port number\n");
+		exit(0);
+	}
+
 	int sockfd, newsockfd, n, cli_len, port_no;
 	struct sockaddr_in serv;
-	port_no = 5000;
+	port_no = atoi(argv[1]); //5000;
 	char buffer[256];
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	bzero((char*)&serv, sizeof(serv));

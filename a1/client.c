@@ -80,12 +80,17 @@ void readinput(char *buffer) {
 	printf("Haystack: %s Needle: %s", haystack, needle);
 }
 
-int main() {
+int main(int argc, char** argv) {
+	if(argc<2) {
+		printf("Enter port number\n"); 
+		exit(0);
+	}
+
 	int sockfd, newsockfd, n, cli_len, port_no;
 	struct sockaddr_in serv;
 	
 	//Server Information. Port 5000;
-	port_no = 5000;
+	port_no = atoi(argv[1]);//5000;
 	char buffer[256], haystack[256], needle[256];
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
